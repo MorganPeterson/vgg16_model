@@ -14,7 +14,7 @@ defmodule VGG16Model do
       iex> Vgg16Model.build_model({224, 224, 3})
   """
 
-  def build_model(input) do
+  def build_model(input, count) do
     block1 =
       Axon.input(input, "input")
       |> Axon.conv(64, kernel_size: {3}, padding: :same, activation: :relu, name: "conv1_1")
@@ -54,7 +54,7 @@ defmodule VGG16Model do
     |> Axon.dropout(rate: 0.5, name: "dropout_1")
     |> Axon.dense(4096, activation: :relu, name: "fc_2")
     |> Axon.dropout(rate: 0.5, name: "dropout_4")
-    |> Axon.dense(1000, activation: :softmax, name: "output")
+    |> Axon.dense(count, activation: :softmax, name: "output")
   end
 
   @doc """
