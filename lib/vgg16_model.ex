@@ -64,11 +64,11 @@ defmodule VGG16Model do
       iex> Vgg16Model.train(model, data, 10)
   """
 
-  def train(model, data, epochs) do
+  def train(model, images, labels, epochs) do
     model
       |> Axon.Loop.trainer(:categorical_cross_entropy, Axon.Optimizers.adamw(0.005))
       |> Axon.Loop.metric(:accuracy, "accuracy")
-      |> Axon.Loop.run(data, %{}, epochs: epochs)
+      |> Axon.Loop.run(Stream.zip(images, labels), %{}, epochs: epochs)
   end
 end
 
