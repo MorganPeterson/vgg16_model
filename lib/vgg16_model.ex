@@ -72,7 +72,7 @@ defmodule VGG16Model do
     model
       |> Axon.Loop.trainer(:categorical_cross_entropy, Axon.Optimizers.adamw(0.005))
       |> Axon.Loop.metric(:accuracy, "accuracy")
-      |> Axon.Loop.run(data, epochs: epochs, compiler: EXLA)
+      |> Axon.Loop.run(data, %{}, epochs: epochs, compiler: EXLA)
   end
 end
 
