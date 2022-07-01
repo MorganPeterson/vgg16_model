@@ -18,7 +18,7 @@ defmodule VGG16Model do
       Axon.input(input, "input")
       |> Axon.conv(64, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv1_1")
       |> Axon.conv(64, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv1_2")
-      |> Axon.max_pool(strides: [2], name: "max_pool_1")
+      |> Axon.max_pool(strides: [2, 2], name: "max_pool_1")
 
     block2 =
       block1
