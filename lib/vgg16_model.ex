@@ -1,19 +1,16 @@
-EXLA.set_as_nx_default([:tpu, :cuda, :rocm, :host])
-
 defmodule VGG16Model do
   @moduledoc """
   Documentation for `Vgg16Model`.
   """
 
   require Axon
-  require EXLA
 
   @doc """
   Build VGG16 model.
 
   ## Examples
 
-      iex> Vgg16Model.build_model({224, 224, 3})
+      iex> Vgg16Model.build_model({224, 224, 3}, 1000)
   """
 
   def build_model(input, count) do
@@ -68,11 +65,10 @@ defmodule VGG16Model do
   """
 
   def train(model, data, epochs) do
-    model_state =
     model
       |> Axon.Loop.trainer(:categorical_cross_entropy, Axon.Optimizers.adamw(0.005))
       |> Axon.Loop.metric(:accuracy, "accuracy")
-      |> Axon.Loop.run(data, %{}, epochs: epochs, compiler: EXLA)
+      |> Axon.Loop.run(data, %{}, epochs: epochs)
   end
 end
 
