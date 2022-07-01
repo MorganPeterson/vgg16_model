@@ -16,36 +16,36 @@ defmodule VGG16Model do
   def build_model(input, count) do
     block1 =
       Axon.input(input, "input")
-      |> Axon.conv(64, kernel_size: {3}, padding: :same, activation: :relu, name: "conv1_1")
-      |> Axon.conv(64, kernel_size: {3}, padding: :same, activation: :relu, name: "conv1_2")
+      |> Axon.conv(64, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv1_1")
+      |> Axon.conv(64, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv1_2")
       |> Axon.max_pool(strides: [2], name: "max_pool_1")
 
     block2 =
       block1
-      |> Axon.conv(128, kernel_size: {3}, padding: :same, activation: :relu, name: "conv2_1")
-      |> Axon.conv(128, kernel_size: {3}, padding: :same, activation: :relu, name: "conv2_2")
-      |> Axon.max_pool(strides: [2], name: "max_pool_2")
+      |> Axon.conv(128, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv2_1")
+      |> Axon.conv(128, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv2_2")
+      |> Axon.max_pool(strides: [2, 2], name: "max_pool_2")
 
     block3 =
       block2
-      |> Axon.conv(256, kernel_size: {3}, padding: :same, activation: :relu, name: "conv3_1")
-      |> Axon.conv(256, kernel_size: {3}, padding: :same, activation: :relu, name: "conv3_2")
-      |> Axon.conv(256, kernel_size: {3}, padding: :same, activation: :relu, name: "conv3_3")
-      |> Axon.max_pool(strides: [2], name: "max_pool_3")
+      |> Axon.conv(256, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv3_1")
+      |> Axon.conv(256, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv3_2")
+      |> Axon.conv(256, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv3_3")
+      |> Axon.max_pool(strides: [2, 2], name: "max_pool_3")
 
     block4 =
       block3
-      |> Axon.conv(512, kernel_size: {3}, padding: :same, activation: :relu, name: "conv4_1")
-      |> Axon.conv(512, kernel_size: {3}, padding: :same, activation: :relu, name: "conv4_2")
-      |> Axon.conv(512, kernel_size: {3}, padding: :same, activation: :relu, name: "conv4_3")
-      |> Axon.max_pool(strides: [2], name: "max_pool_4")
+      |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv4_1")
+      |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv4_2")
+      |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv4_3")
+      |> Axon.max_pool(strides: [2, 2], name: "max_pool_4")
 
     block5 =
       block4
-      |> Axon.conv(512, kernel_size: {3}, padding: :same, activation: :relu, name: "conv5_1")
-      |> Axon.conv(512, kernel_size: {3}, padding: :same, activation: :relu, name: "conv5_2")
-      |> Axon.conv(512, kernel_size: {3}, padding: :same, activation: :relu, name: "conv5_3")
-      |> Axon.max_pool(strides: [2], name: "max_pool_4")
+      |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv5_1")
+      |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv5_2")
+      |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv5_3")
+      |> Axon.max_pool(strides: [2, 2], name: "max_pool_4")
 
     block5
     |> Axon.flatten(name: "flatten")
