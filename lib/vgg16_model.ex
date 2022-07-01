@@ -1,3 +1,5 @@
+EXLA.set_as_nx_default([:tpu, :cuda, :rocm, :host])
+
 defmodule VGG16Model do
   @moduledoc """
   Documentation for `Vgg16Model`.
