@@ -1,3 +1,8 @@
+EXLA.set_as_nx_default(
+  [:tpu, :cuda, :rocm, :host],
+  run_options: [keep_on_device: true]
+)
+
 defmodule VGG16Model do
   @moduledoc """
   Documentation for `Vgg16Model`.
@@ -72,3 +77,4 @@ defmodule VGG16Model do
   end
 end
 
+VGG16Model.build_model({224, 224, 3}, 1100)
