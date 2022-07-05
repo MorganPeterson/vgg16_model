@@ -62,7 +62,7 @@ defmodule VGG16Model do
       iex> Vgg16Model.build_model({nil, 224, 224, 3}, 10)
   """
 
-  def build_model(input_shape, count) do
+  def build_model!(input_shape, count) do
     input_shape
     |> block_1
     |> block_2
@@ -79,7 +79,9 @@ defmodule VGG16Model do
 
       iex> Vgg16Model.train(model, data, optimizer, 10)
   """
-  def train_model(model, data, optimizer, epochs) do
+  def train_model!(model, data, epochs) do
+    optimizer = Axon.Optimizers.adam(1.0e-4)
+
     model
     |> Axon.Loop.trainer(:categorical_cross_entropy, optimizer, log: 1)
     |> Axon.Loop.metric(:accuracy)
@@ -93,7 +95,7 @@ defmodule VGG16Model do
 
       iex> Vgg16Model.train(model, state, data)
   """
-  def test_model(model, state, data) do
+  def test_model!(model, state, data) do
     model
     |> Axon.Loop.evaluator()
     |> Axon.Loop.metric(:accuracy, "Accuracy")
@@ -110,6 +112,20 @@ defmodule VGG16Model do
     |> File.read!()
     |> Axon.deserialize
   end
+
+  defp process_image(image_path) do
+    image_path
+    |> StbImage.read_file!
+    |> StbImage.resize(224, 224)
+    |> StbImage.to_nx
+    |> Nx.reshape({1, 224, 224, 3})
+    |> Nx.divide(255.0)
+  end
+
+  def predict!(model, model_state, image_path) do
+    image = process_image(image_path)
+    Axon.predict(model, model_state, image)
+  end
 end
 
-VGG16Model.build_model({nil, 224, 224, 3}, 1100)
+VGG16Model.build_model!({nil, 224, 224, 3}, 1100)

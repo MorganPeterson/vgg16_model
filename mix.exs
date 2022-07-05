@@ -22,6 +22,7 @@ defmodule Vgg16Model.MixProject do
   defp deps do
     [
       {:axon, "~> 0.2.0-dev", github: "elixir-nx/axon"},
+      {:stb_image, "~> 0.5.2"},
       {:exla, "~> 0.2"}
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
