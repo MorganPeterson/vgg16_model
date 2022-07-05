@@ -99,6 +99,17 @@ defmodule VGG16Model do
     |> Axon.Loop.metric(:accuracy, "Accuracy")
     |> Axon.Loop.run(data, state)
   end
+
+  def save_model!(filepath, model, state) do
+    contents = Axon.serialize(model, state)
+    File.write!(filepath, contents)
+  end
+
+  def load_model!(filepath) do
+    filepath
+    |> File.read!()
+    |> Axon.deserialize
+  end
 end
 
 VGG16Model.build_model({nil, 224, 224, 3}, 1100)
