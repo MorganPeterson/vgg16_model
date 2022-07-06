@@ -129,15 +129,18 @@ defmodule VGG16Model do
 
   @doc """
   Save model to file.
+  ## Parameters
+    - filepath: String representing the location to save model
+    - model: Term representing the Axon model that was built by the user
+    - state: Term representing the Axon parameters after model has been trained
 
   ## Example
-      data = data("./data/location")
-      model = VGG16Model.build_model({nil, 224, 224, 3}, 10)
-      state = VGG16Model.train(model, data, 10)
-
-      filepath = "./local/dir/filename"
-      VGG16Model.save_model(filepath, model, state)
+      case VGG16Model.save_model(filepath, model, state) do
+        {:ok} -> IO.write("File saved successfully\n")
+        {:error, reason} -> IO.write(reason)
+      end
   """
+  @spec save_model(String.t(), term(), term()) :: :ok | {:error, String.t()}
   def save_model(filepath, model, state) do
     case model_serialize(model, state) do
       {:ok, content} -> File.write(filepath, content)
@@ -148,10 +151,16 @@ defmodule VGG16Model do
   @doc """
   Load model from file.
 
+  ## Parameters
+    - filepath: String that represents the file to load
+
   ## Example
-      filepath = "./local/dir/filename"
-      VGG16Model.save_model(filepath)
+      case VGG16Model.load_model(filepath) do
+        {:ok, model} -> handle_model(model)
+        {:error, reason} -> IO.write(reason)
+      end
   """
+  @spec load_model(String.t()) :: term() | {:error, String.t()}
   def load_model(filepath) do
     case File.read(filepath) do
       {:ok, binary} -> Axon.deserialize(binary)
