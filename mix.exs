@@ -4,7 +4,7 @@ defmodule Vgg16Model.MixProject do
   def project do
     [
       app: :vgg16_model,
-      version: "0.1.0",
+      version: "0.1.1",
       elixir: "~> 1.13",
       start_permanent: Mix.env() == :prod,
       deps: deps()
@@ -24,8 +24,6 @@ defmodule Vgg16Model.MixProject do
       {:axon, "~> 0.2.0-dev", github: "elixir-nx/axon"},
       {:stb_image, "~> 0.5.2"},
       {:exla, "~> 0.2"}
-      # {:dep_from_hexpm, "~> 0.3.0"},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
     ]
   end
 end
