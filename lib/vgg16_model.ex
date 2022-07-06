@@ -54,14 +54,33 @@ defmodule VGG16Model do
     |> Axon.dense(count, activation: :softmax, name: "output")
   end
 
+  defp model_serialize(model, state) do
+    try do
+      content = Axon.serialize(model, state)
+      {:ok, content}
+    catch
+      error, reason -> {:error, "Caught #{reason}: #{error}"}
+    end
+  end
+
+  defp process_image(image_path) do
+    image_path
+    |> StbImage.read_file!
+    |> StbImage.resize(224, 224)
+    |> StbImage.to_nx
+    |> Nx.reshape({1, 224, 224, 3})
+    |> Nx.divide(255.0)
+  end
+
   @doc """
   Build VGG16 model.
 
   ## Examples
+      output_count = 10
+      input_shape = {nil, 224, 224, 3}
 
-      iex> Vgg16Model.build_model({nil, 224, 224, 3}, 10)
+      model = Vgg16Model.build_model(input_shape, output_count)
   """
-
   def build_model!(input_shape, count) do
     input_shape
     |> block_1
@@ -76,8 +95,11 @@ defmodule VGG16Model do
   Train VGG16 model.
 
   ## Examples
+      data = data("./data/location")
+      model = VGG16Model.build_model({nil, 224, 224, 3}, 10)
+      epochs = 10
 
-      iex> Vgg16Model.train(model, data, optimizer, 10)
+      state = VGG16Model.train(model, data, epochs)
   """
   def train_model!(model, data, epochs) do
     optimizer = Axon.Optimizers.adam(1.0e-4)
@@ -91,9 +113,12 @@ defmodule VGG16Model do
   @doc """
   Test VGG16 model.
 
-  ## Examples
+  ## Example
+      data = data("./data/location")
+      model = VGG16Model.build_model({nil, 224, 224, 3}, 10)
+      state = VGG16Model.train(model, data, 10)
 
-      iex> Vgg16Model.train(model, state, data)
+      Vgg16Model.test(model, state, data)
   """
   def test_model!(model, state, data) do
     model
@@ -102,27 +127,51 @@ defmodule VGG16Model do
     |> Axon.Loop.run(data, state)
   end
 
-  def save_model!(filepath, model, state) do
-    contents = Axon.serialize(model, state)
-    File.write!(filepath, contents)
+  @doc """
+  Save model to file.
+
+  ## Example
+      data = data("./data/location")
+      model = VGG16Model.build_model({nil, 224, 224, 3}, 10)
+      state = VGG16Model.train(model, data, 10)
+
+      filepath = "./local/dir/filename"
+      VGG16Model.save_model(filepath, model, state)
+  """
+  def save_model(filepath, model, state) do
+    case model_serialize(model, state) do
+      {:ok, content} -> File.write(filepath, content)
+      {:error, reason} -> {:error, reason}
+    end
   end
 
-  def load_model!(filepath) do
-    filepath
-    |> File.read!()
-    |> Axon.deserialize
+  @doc """
+  Load model from file.
+
+  ## Example
+      filepath = "./local/dir/filename"
+      VGG16Model.save_model(filepath)
+  """
+  def load_model(filepath) do
+    case File.read(filepath) do
+      {:ok, binary} -> Axon.deserialize(binary)
+      {:error, reason} -> {:error, reason}
+    end
   end
 
-  defp process_image(image_path) do
-    image_path
-    |> StbImage.read_file!
-    |> StbImage.resize(224, 224)
-    |> StbImage.to_nx
-    |> Nx.reshape({1, 224, 224, 3})
-    |> Nx.divide(255.0)
-  end
+  @doc """
+  Make prediction given an image.
 
-  def predict!(model, model_state, image_path) do
+  ## Example
+      data = data("./data/location")
+      model = VGG16Model.build_model({nil, 224, 224, 3}, 10)
+      state = VGG16Model.train(model, data, 10)
+
+      image_path = "./local/dir/filename"
+      pred = VGG16Model.predict(model, state, image_path)
+      IO.inspect pred
+  """
+  def predict(model, model_state, image_path) do
     image = process_image(image_path)
     Axon.predict(model, model_state, image)
   end
