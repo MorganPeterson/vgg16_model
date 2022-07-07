@@ -1,4 +1,4 @@
-# Vgg16Model
+# VGG16Model
 
 VGG16 modeling in Elixir
 

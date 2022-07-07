@@ -1,9 +1,11 @@
 defmodule VGG16Model do
   @moduledoc """
-  Documentation for `Vgg16Model`.
+  VGG16Model
   """
 
   require Axon
+  require Nx
+  require StbImage
 
   defp block_1(input_shape) do
     input_shape
@@ -63,13 +65,29 @@ defmodule VGG16Model do
     end
   end
 
-  defp process_image(image_path) do
-    image_path
-    |> StbImage.read_file!
-    |> StbImage.resize(224, 224)
-    |> StbImage.to_nx
-    |> Nx.reshape({1, 224, 224, 3})
-    |> Nx.divide(255.0)
+  @doc """
+  Converts a JPG to a Nx.Tensor.
+
+  ## Parameters
+    - image_path: A string the represents the file location to open and process
+
+  ## Examples
+      {:ok, tensor} = process_image("./dir/file.jpg")
+  """
+  @spec process_image(String.t()) :: Nx.Tensor
+  def process_image(image_path) do
+    try do
+      tensor =
+        image_path
+        |> StbImage.read_file!
+        |> StbImage.resize(224, 224)
+        |> StbImage.to_nx
+        |> Nx.reshape({1, 224, 224, 3})
+        |> Nx.divide(255.0)
+      {:ok, tensor}
+    catch
+      error, reason -> {:error, "Caught #{reason}: #{error}"}
+    end
   end
 
   @doc """
@@ -81,7 +99,8 @@ defmodule VGG16Model do
 
       model = Vgg16Model.build_model(input_shape, output_count)
   """
-  def build_model!(input_shape, count) do
+  @spec build_model(tuple(), integer()) :: term()
+  def build_model(input_shape, count) do
     input_shape
     |> block_1
     |> block_2
@@ -101,7 +120,8 @@ defmodule VGG16Model do
 
       state = VGG16Model.train(model, data, epochs)
   """
-  def train_model!(model, data, epochs) do
+  @spec train_model(term(), term(), integer()) :: term()
+  def train_model(model, data, epochs) do
     optimizer = Axon.Optimizers.adam(1.0e-4)
 
     model
@@ -120,7 +140,8 @@ defmodule VGG16Model do
 
       Vgg16Model.test(model, state, data)
   """
-  def test_model!(model, state, data) do
+  @spec test_model(term(), term(), term()) :: nil
+  def test_model(model, state, data) do
     model
     |> Axon.Loop.evaluator()
     |> Axon.Loop.metric(:accuracy, "Accuracy")
@@ -180,10 +201,13 @@ defmodule VGG16Model do
       pred = VGG16Model.predict(model, state, image_path)
       IO.inspect pred
   """
+  @spec predict(term(), term(), String.t()) :: {:ok, list(Nx.Tensor)} | {:error, String.t()}
   def predict(model, model_state, image_path) do
-    image = process_image(image_path)
-    Axon.predict(model, model_state, image)
+    case process_image(image_path) do
+      {:ok, image} -> {:ok, Axon.predict(model, model_state, image)}
+      {:error, reason} -> {:error, reason}
+    end
   end
 end
 
-VGG16Model.build_model!({nil, 224, 224, 3}, 1100)
+VGG16Model.build_model({nil, 224, 224, 3}, 1100)
