@@ -208,12 +208,10 @@ defmodule VGG16Model do
       pred = VGG16Model.predict(model, state, image_path)
       IO.inspect pred
    """
-   @spec predict(term(), term(), String.t()) :: {:ok, list(Nx.Tensor)} | {:error, String.t()}
+   @spec predict(term(), term(), list(String.t())) :: Nx.Tensor
    def predict(model, model_state, paths) do
-     case process_images(paths) do
-       {:ok, images} -> {:ok, Axon.predict(model, model_state, images)}
-       {:error, reason} -> {:error, reason}
-     end
+     images = process_images(paths)
+     Axon.predict(model, model_state, images)
    end
 end
 
