@@ -156,44 +156,44 @@ defmodule VGG16Model do
   end
 
   @doc """
-    Test VGG16 model.
-
-    ## Example
-      data = data("./data/location")
-      model = VGG16Model.build_model({nil, 224, 224, 3}, 10)
-      state = VGG16Model.train(model, data, 10)
-
-      Vgg16Model.test(model, state, data)
-   """
-   @spec test_model(term(), term(), term()) :: nil
-   def test_model(model, state, data) do
-     model
-     |> Axon.Loop.evaluator()
-     |> Axon.Loop.metric(:accuracy, "Accuracy")
-     |> Axon.Loop.run(data, state)
-   end
-
-   @doc """
-   Save model to file.
-
-   ## Parameters
-      - filepath: String representing the location to save model
-      - model: Term representing the Axon model that was built by the user
-      - state: Term representing the Axon parameters after model has been trained
+  Test VGG16 model.
 
   ## Example
-      case VGG16Model.save_model(filepath, model, state) do
-        {:ok} -> IO.write("File saved successfully\n")
-        {:error, reason} -> IO.write(reason)
-      end
-   """
-   @spec save_model(String.t(), term(), term()) :: :ok | {:error, String.t()}
-   def save_model(filepath, model, state) do
-     case model_serialize(model, state) do
-       {:ok, content} -> File.write(filepath, content)
-       {:error, reason} -> {:error, reason}
-     end
-   end
+    data = data("./data/location")
+    model = VGG16Model.build_model({nil, 224, 224, 3}, 10)
+    state = VGG16Model.train(model, data, 10)
+
+    Vgg16Model.test(model, state, data)
+  """
+  @spec test_model(term(), term(), term()) :: nil
+  def test_model(model, state, data) do
+    model
+    |> Axon.Loop.evaluator()
+    |> Axon.Loop.metric(:accuracy, "Accuracy")
+    |> Axon.Loop.run(data, state)
+  end
+
+  @doc """
+  Save model to file.
+
+  ## Parameters
+    - filepath: String representing the location to save model
+    - model: Term representing the Axon model that was built by the user
+    - state: Term representing the Axon parameters after model has been trained
+
+  ## Example
+    case VGG16Model.save_model(filepath, model, state) do
+      {:ok} -> IO.write("File saved successfully\n")
+      {:error, reason} -> IO.write(reason)
+    end
+  """
+  @spec save_model(String.t(), term(), term()) :: :ok | {:error, String.t()}
+  def save_model(filepath, model, state) do
+    case model_serialize(model, state) do
+      {:ok, content} -> File.write(filepath, content)
+      {:error, reason} -> {:error, reason}
+    end
+  end
 
   @doc """
   Load model from file.
@@ -206,24 +206,24 @@ defmodule VGG16Model do
         {:ok, model} -> handle_model(model)
         {:error, reason} -> IO.write(reason)
       end
-   """
-   @spec load_model(String.t()) :: term() | {:error, String.t()}
-   def load_model(filepath) do
-     case File.read(filepath) do
-       {:ok, binary} -> Axon.deserialize(binary)
-       {:error, reason} -> {:error, reason}
-     end
-   end
+  """
+  @spec load_model(String.t()) :: term() | {:error, String.t()}
+  def load_model(filepath) do
+    case File.read(filepath) do
+      {:ok, binary} -> Axon.deserialize(binary)
+      {:error, reason} -> {:error, reason}
+    end
+  end
 
   @doc """
   Make prediction given an image.
 
-  ## Parameters
-    - model: the vgg16 model
-    - model_state: the trained model parameters
-    - paths: a list of paths to JPG images
+    ## Parameters
+      - model: the vgg16 model
+      - model_state: the trained model parameters
+      - paths: a list of paths to JPG images
 
-  ## Example
+    ## Example
       data = data("./data/location")
       model = VGG16Model.build_model({nil, 224, 224, 3}, 10)
       state = VGG16Model.train(model, data, 10)
@@ -231,12 +231,12 @@ defmodule VGG16Model do
       image_path = "./local/dir/filename"
       pred = VGG16Model.predict(model, state, image_path)
       IO.inspect pred
-   """
-   @spec predict(term(), term(), list(String.t())) :: Nx.Tensor
-   def predict(model, model_state, paths) do
-     images = process_images(paths)
-     Axon.predict(model, model_state, images)
-   end
+  """
+  @spec predict(term(), term(), list(String.t())) :: Nx.Tensor
+  def predict(model, model_state, paths) do
+    images = process_images(paths)
+    Axon.predict(model, model_state, images)
+  end
 end
 
 VGG16Model.build_model({nil, 224, 224, 3}, 10)
