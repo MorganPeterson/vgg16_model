@@ -7,7 +7,11 @@ defmodule VGG16Model do
   require Nx
   require StbImage
 
-  defp block_1(input_shape) do
+  defguardp is_list_gt_zero(x) when is_list(x) and length(x) > 0
+  defguardp is_input_shape(x) when is_tuple(x) and tuple_size(x) == 4
+
+  @spec block_1(tuple) :: %Axon{}
+  defp block_1(input_shape) when is_input_shape(input_shape) do
     input_shape
     |>Axon.input("input")
     |> Axon.conv(64, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv1_1")
@@ -15,14 +19,16 @@ defmodule VGG16Model do
     |> Axon.max_pool(strides: [2, 2], name: "max_pool_1")
   end
 
-  defp block_2(block) do
+  @spec block_2(%Axon{}) :: %Axon{}
+  defp block_2(%Axon{} = block) do
     block
     |> Axon.conv(128, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv2_1")
     |> Axon.conv(128, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv2_2")
     |> Axon.max_pool(strides: [2, 2], name: "max_pool_2")
   end
 
-  defp block_3(block) do
+  @spec block_3(%Axon{}) :: %Axon{}
+  defp block_3(%Axon{} = block) do
     block
     |> Axon.conv(256, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv3_1")
     |> Axon.conv(256, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv3_2")
@@ -30,7 +36,8 @@ defmodule VGG16Model do
     |> Axon.max_pool(strides: [2, 2], name: "max_pool_3")
   end
 
-  defp block_4(block) do
+  @spec block_4(%Axon{}) :: %Axon{}
+  defp block_4(%Axon{} = block) do
     block
     |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv4_1")
     |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv4_2")
@@ -38,7 +45,8 @@ defmodule VGG16Model do
     |> Axon.max_pool(strides: [2, 2], name: "max_pool_4")
   end
 
-  defp block_5(block) do
+  @spec block_5(%Axon{}) :: %Axon{}
+  defp block_5(%Axon{} = block) do
     block
     |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv5_1")
     |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv5_2")
@@ -46,7 +54,8 @@ defmodule VGG16Model do
     |> Axon.max_pool(strides: [2, 2], name: "max_pool_4")
   end
 
-  defp block_encoder(block, count) do
+  @spec block_encoder(%Axon{}, integer) :: %Axon{}
+  defp block_encoder(%Axon{} = block, count) when is_integer(count) and count > 0 do
     block
     |> Axon.flatten(name: "flatten")
     |> Axon.dense(4096, activation: :relu, name: "fc_1")
@@ -56,6 +65,7 @@ defmodule VGG16Model do
     |> Axon.dense(count, activation: :softmax, name: "output")
   end
 
+  @spec model_serialize(%Axon{}, term) :: {:ok, binary} | {:error, String.t()}
   defp model_serialize(model, state) do
     try do
       content = Axon.serialize(model, state)
@@ -65,7 +75,8 @@ defmodule VGG16Model do
     end
   end
 
-  defp parse_image(filename) do
+  @spec parse_image(String.t()) :: Nx.Tensor
+  defp parse_image(filename) when is_bitstring(filename) do
     filename
     |> StbImage.read_file!
     |> StbImage.resize(224, 224)
@@ -90,7 +101,8 @@ defmodule VGG16Model do
     |> Nx.stack
   end
 
-  defp label_list_size(binary_list) do
+  @spec label_list_size(list(binary)) :: list(binary)
+  defp label_list_size(binary_list) when is_list_gt_zero(binary_list) do
     size = length(binary_list)
     if size < 10 do
       s = 10 - size
@@ -100,7 +112,8 @@ defmodule VGG16Model do
     end
   end
 
-  defp parse_label(label) do
+  @spec parse_label(String.t()) :: Nx.Tensor
+  defp parse_label(label) when is_bitstring(label) do
     label
     |> String.to_integer
     |> Integer.digits(2)
@@ -109,7 +122,7 @@ defmodule VGG16Model do
   end
 
   @spec process_labels(list(String.t())) :: Nx.Tensor
-  def process_labels(labels) do
+  def process_labels(labels) when is_list_gt_zero(labels) do
     labels
     |> Enum.map(fn label -> parse_label(label) end)
     |> Nx.stack
@@ -124,8 +137,8 @@ defmodule VGG16Model do
 
       model = Vgg16Model.build_model(input_shape, output_count)
   """
-  @spec build_model(tuple(), integer()) :: term()
-  def build_model(input_shape, count) do
+  @spec build_model(tuple, integer) :: %Axon{}
+  def build_model(input_shape, count) when is_input_shape(input_shape) and is_integer(count) do
     input_shape
     |> block_1
     |> block_2
@@ -145,14 +158,14 @@ defmodule VGG16Model do
 
       state = VGG16Model.train(model, data, epochs)
   """
-  @spec train_model(term(), term(), integer()) :: term()
-  def train_model(model, data, epochs) do
+  @spec train_model(%Axon{}, term, integer, integer) :: term
+  def train_model(%Axon{} = model, data, epochs, iterations) do
     optimizer = Axon.Optimizers.adam(1.0e-4)
 
     model
     |> Axon.Loop.trainer(:categorical_cross_entropy, optimizer, log: 1)
     |> Axon.Loop.metric(:accuracy)
-    |> Axon.Loop.run(data, %{}, epochs: epochs, iterations: 1)
+    |> Axon.Loop.run(data, %{}, epochs: epochs, iterations: iterations, timeout: :infinity)
   end
 
   @doc """
@@ -165,8 +178,8 @@ defmodule VGG16Model do
 
     Vgg16Model.test(model, state, data)
   """
-  @spec test_model(term(), term(), term()) :: nil
-  def test_model(model, state, data) do
+  @spec test_model(%Axon{}, term, term) :: nil
+  def test_model(%Axon{} = model, state, data) do
     model
     |> Axon.Loop.evaluator()
     |> Axon.Loop.metric(:accuracy, "Accuracy")
@@ -187,8 +200,8 @@ defmodule VGG16Model do
       {:error, reason} -> IO.write(reason)
     end
   """
-  @spec save_model(String.t(), term(), term()) :: :ok | {:error, String.t()}
-  def save_model(filepath, model, state) do
+  @spec save_model(String.t(), %Axon{}, term) :: :ok | {:error, String.t()}
+  def save_model(filepath, %Axon{} = model, state) do
     case model_serialize(model, state) do
       {:ok, content} -> File.write(filepath, content)
       {:error, reason} -> {:error, reason}
@@ -207,8 +220,8 @@ defmodule VGG16Model do
         {:error, reason} -> IO.write(reason)
       end
   """
-  @spec load_model(String.t()) :: term() | {:error, String.t()}
-  def load_model(filepath) do
+  @spec load_model(String.t()) :: binary | {:error, String.t()}
+  def load_model(filepath) when is_bitstring(filepath) do
     case File.read(filepath) do
       {:ok, binary} -> Axon.deserialize(binary)
       {:error, reason} -> {:error, reason}
@@ -232,11 +245,12 @@ defmodule VGG16Model do
       pred = VGG16Model.predict(model, state, image_path)
       IO.inspect pred
   """
-  @spec predict(term(), term(), list(String.t())) :: Nx.Tensor
-  def predict(model, model_state, paths) do
+  @spec predict(%Axon{}, term(), list(String.t())) :: Nx.Tensor
+  def predict(%Axon{} = model, model_state, paths) when is_list_gt_zero(paths) do
     images = process_images(paths)
     Axon.predict(model, model_state, images)
   end
 end
 
-VGG16Model.build_model({nil, 224, 224, 3}, 10)
+model = VGG16Model.build_model({nil, 224, 224, 3}, 10)
+IO.inspect model
