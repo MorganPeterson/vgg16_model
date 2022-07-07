@@ -82,7 +82,7 @@ defmodule VGG16Model do
         |> StbImage.read_file!
         |> StbImage.resize(224, 224)
         |> StbImage.to_nx
-        |> Nx.reshape({1, 224, 224, 3})
+        |> Nx.reshape({224, 224, 3})
         |> Nx.divide(255.0)
       {:ok, tensor}
     catch
