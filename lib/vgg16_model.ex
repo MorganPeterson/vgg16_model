@@ -65,15 +65,6 @@ defmodule VGG16Model do
     end
   end
 
-  @doc """
-  Converts a JPG to a Nx.Tensor.
-
-  ## Parameters
-    - image_path: A string the represents the file location to open and process
-
-  ## Examples
-      {:ok, tensor} = process_image("./dir/file.jpg")
-  """
   @spec process_image(String.t()) :: Nx.Tensor
   def process_image(image_path) do
     try do
@@ -82,7 +73,7 @@ defmodule VGG16Model do
         |> StbImage.read_file!
         |> StbImage.resize(224, 224)
         |> StbImage.to_nx
-        |> Nx.reshape({224, 224, 3})
+        |> Nx.reshape({1, 224, 224, 3})
         |> Nx.divide(255.0)
       {:ok, tensor}
     catch
