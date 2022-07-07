@@ -90,6 +90,30 @@ defmodule VGG16Model do
     |> Nx.stack
   end
 
+  defp label_list_size(binary_list) do
+    size = length(binary_list)
+    if size < 10 do
+      s = 10 - size
+      binary_list ++ List.duplicate(0, s)
+    else
+      binary_list
+    end
+  end
+
+  defp parse_label(label) do
+    label
+    |> String.to_integer
+    |> Integer.digits(2)
+    |> label_list_size
+    |> Nx.tensor(type: {:u, 8})
+  end
+
+  @spec process_labels(list(String.t())) :: Nx.Tensor
+  def process_labels(labels) do
+    labels
+    |> Enum.map(fn label -> parse_label(label) end)
+    Nx.stack
+  end
 
   @doc """
   Build VGG16 model.
