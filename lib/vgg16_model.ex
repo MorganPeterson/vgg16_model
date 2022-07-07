@@ -112,7 +112,7 @@ defmodule VGG16Model do
   def process_labels(labels) do
     labels
     |> Enum.map(fn label -> parse_label(label) end)
-    Nx.stack
+    |> Nx.stack
   end
 
   @doc """
