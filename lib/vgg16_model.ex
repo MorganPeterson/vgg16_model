@@ -9,6 +9,7 @@ defmodule VGG16Model do
 
   defguardp is_list_gt_zero(x) when is_list(x) and length(x) > 0
   defguardp is_input_shape(x) when is_tuple(x) and tuple_size(x) == 4
+  defguard is_trainable(x, y, z) when is_function(x) and is_integer(y) and is_integer(z)
 
   @spec block_1(tuple) :: %Axon{}
   defp block_1(input_shape) when is_input_shape(input_shape) do
@@ -54,7 +55,7 @@ defmodule VGG16Model do
     |> Axon.max_pool(strides: [2, 2], name: "max_pool_4")
   end
 
-  @spec block_encoder(%Axon{}, integer) :: %Axon{}
+  @spec block_encoder(%Axon{}, Integer) :: %Axon{}
   defp block_encoder(%Axon{} = block, count) when is_integer(count) and count > 0 do
     block
     |> Axon.flatten(name: "flatten")
@@ -65,8 +66,8 @@ defmodule VGG16Model do
     |> Axon.dense(count, activation: :softmax, name: "output")
   end
 
-  @spec model_serialize(%Axon{}, term) :: {:ok, binary} | {:error, String.t()}
-  defp model_serialize(model, state) do
+  @spec model_serialize(%Axon{}, Map) :: {:ok, Binary} | {:error, String.t()}
+  defp model_serialize(%Axon{} = model, state) when is_map(state) do
     try do
       content = Axon.serialize(model, state)
       {:ok, content}
@@ -95,13 +96,13 @@ defmodule VGG16Model do
       tensor = Vgg16Model.process_images(images)
   """
   @spec process_images(list(String.t())) :: Nx.Tensor
-  def process_images(images) do
+  def process_images(images) when is_list_gt_zero(images) do
     images
     |> Enum.map(fn image -> parse_image(image) end)
     |> Nx.stack
   end
 
-  @spec label_list_size(list(binary)) :: list(binary)
+  @spec label_list_size(list(Binary)) :: list(Binary)
   defp label_list_size(binary_list) when is_list_gt_zero(binary_list) do
     size = length(binary_list)
     if size < 10 do
@@ -137,7 +138,7 @@ defmodule VGG16Model do
 
       model = Vgg16Model.build_model(input_shape, output_count)
   """
-  @spec build_model(tuple, integer) :: %Axon{}
+  @spec build_model(Tuple, Integer) :: %Axon{}
   def build_model(input_shape, count) when is_input_shape(input_shape) and is_integer(count) do
     input_shape
     |> block_1
@@ -158,8 +159,9 @@ defmodule VGG16Model do
 
       state = VGG16Model.train(model, data, epochs)
   """
-  @spec train_model(%Axon{}, term, integer, integer) :: term
-  def train_model(%Axon{} = model, data, epochs, iterations) do
+  @spec train_model(%Axon{}, Function, Integer, Integer) :: Map
+  def train_model(%Axon{} = model, data, epochs, iterations)
+  when is_trainable(data, epochs, iterations) do
     optimizer = Axon.Optimizers.adam(1.0e-4)
 
     model
@@ -178,8 +180,8 @@ defmodule VGG16Model do
 
     Vgg16Model.test(model, state, data)
   """
-  @spec test_model(%Axon{}, term, term) :: nil
-  def test_model(%Axon{} = model, state, data) do
+  @spec test_model(%Axon{}, Map, Function) :: nil
+  def test_model(%Axon{} = model, state, data) when is_map(state) and is_function(data) do
     model
     |> Axon.Loop.evaluator()
     |> Axon.Loop.metric(:accuracy, "Accuracy")
@@ -200,8 +202,8 @@ defmodule VGG16Model do
       {:error, reason} -> IO.write(reason)
     end
   """
-  @spec save_model(String.t(), %Axon{}, term) :: :ok | {:error, String.t()}
-  def save_model(filepath, %Axon{} = model, state) do
+  @spec save_model(String.t(), %Axon{}, Map) :: :ok | {:error, String.t()}
+  def save_model(filepath, %Axon{} = model, state) when is_bitstring(filepath) and is_map(state) do
     case model_serialize(model, state) do
       {:ok, content} -> File.write(filepath, content)
       {:error, reason} -> {:error, reason}
@@ -220,7 +222,7 @@ defmodule VGG16Model do
         {:error, reason} -> IO.write(reason)
       end
   """
-  @spec load_model(String.t()) :: binary | {:error, String.t()}
+  @spec load_model(String.t()) :: {:ok, {%Axon{}, Map}} | {:error, String.t()}
   def load_model(filepath) when is_bitstring(filepath) do
     case File.read(filepath) do
       {:ok, binary} -> Axon.deserialize(binary)
@@ -245,8 +247,9 @@ defmodule VGG16Model do
       pred = VGG16Model.predict(model, state, image_path)
       IO.inspect pred
   """
-  @spec predict(%Axon{}, term(), list(String.t())) :: Nx.Tensor
-  def predict(%Axon{} = model, model_state, paths) when is_list_gt_zero(paths) do
+  @spec predict(%Axon{}, Map, list(String.t())) :: Nx.Tensor
+  def predict(%Axon{} = model, model_state, paths)
+  when is_map(model_state) and is_list_gt_zero(paths) do
     images = process_images(paths)
     Axon.predict(model, model_state, images)
   end
