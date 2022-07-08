@@ -102,30 +102,26 @@ defmodule VGG16Model do
     |> Nx.stack
   end
 
-  @spec label_list_size(list(Binary)) :: list(Binary)
-  defp label_list_size(binary_list) when is_list_gt_zero(binary_list) do
-    size = length(binary_list)
-    if size < 10 do
-      s = 10 - size
-      binary_list ++ List.duplicate(0, s)
-    else
-      binary_list
-    end
-  end
+  @spec parse_label(String.t(), Integer) :: Nx.Tensor
+  defp parse_label(label, size) when is_bitstring(label) and is_integer(size) do
+    lbl =
+      label
+      |> String.to_integer
 
-  @spec parse_label(String.t()) :: Nx.Tensor
-  defp parse_label(label) when is_bitstring(label) do
+    tensor_label =
+      Enum.to_list(0..size)
+      |> List.replace_at(lbl, 1)
+
     label
-    |> String.to_integer
-    |> Integer.digits(2)
-    |> label_list_size
-    |> Nx.tensor(type: {:u, 8})
+    |> Nx.from_binary({:u, 8})
+    |> Nx.new_axis(-1)
+    |> Nx.tensor(tensor_label)
   end
 
-  @spec process_labels(list(String.t())) :: Nx.Tensor
-  def process_labels(labels) when is_list_gt_zero(labels) do
+  @spec process_labels(list(String.t()), Integer) :: Nx.Tensor
+  def process_labels(labels, size) when is_list_gt_zero(labels) and is_integer(size) do
     labels
-    |> Enum.map(fn label -> parse_label(label) end)
+    |> Enum.map(fn label -> parse_label(label, size) end)
     |> Nx.stack
   end
 

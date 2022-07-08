@@ -1,4 +1,4 @@
 defmodule Vgg16ModelTest do
   use ExUnit.Case
-  doctest Vgg16Model
+  doctest VGG16Model
 end
