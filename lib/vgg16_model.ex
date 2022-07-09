@@ -102,14 +102,14 @@ defmodule VGG16Model do
     |> Nx.stack
   end
 
-  @spec parse_label(String.t(), Integer) :: Nx.Tensor
-  defp parse_label(label, size) when is_bitstring(label) and is_integer(size) do
+  @spec parse_label(Integer, Integer) :: Nx.Tensor
+  defp parse_label(label, size) when is_integer(label) and is_integer(size) do
     label
     |> Nx.from_binary({:u, 8})
     |> Nx.equal(Nx.tensor(Enum.to_list(0..size)))
   end
 
-  @spec process_labels(list(String.t()), Integer) :: Nx.Tensor
+  @spec process_labels(list(Integer), Integer) :: Nx.Tensor
   def process_labels(labels, size) when is_list_gt_zero(labels) and is_integer(size) do
     labels
     |> Enum.map(fn label -> parse_label(label, size) end)
