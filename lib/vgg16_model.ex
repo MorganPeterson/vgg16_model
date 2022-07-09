@@ -105,7 +105,7 @@ defmodule VGG16Model do
   @spec parse_label(Integer, Integer) :: Nx.Tensor
   defp parse_label(label, size) when is_integer(label) and is_integer(size) do
     label
-    |> Nx.equal(Nx.tensor(Enum.to_list(0..size)))
+    |> Nx.equal(Nx.tensor(Enum.to_list(1..size)))
   end
 
   @spec process_labels(list(Integer), Integer) :: Nx.Tensor
