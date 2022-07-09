@@ -106,7 +106,6 @@ defmodule VGG16Model do
   defp parse_label(label, size) when is_bitstring(label) and is_integer(size) do
     label
     |> Nx.from_binary({:u, 8})
-    |> Nx.new_axis(-1)
     |> Nx.equal(Nx.tensor(Enum.to_list(0..size)))
   end
 
