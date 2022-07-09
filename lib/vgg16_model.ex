@@ -104,18 +104,10 @@ defmodule VGG16Model do
 
   @spec parse_label(String.t(), Integer) :: Nx.Tensor
   defp parse_label(label, size) when is_bitstring(label) and is_integer(size) do
-    lbl =
-      label
-      |> String.to_integer
-
-    tensor_label =
-      Enum.to_list(0..size)
-      |> List.replace_at(lbl, 1)
-
     label
     |> Nx.from_binary({:u, 8})
     |> Nx.new_axis(-1)
-    |> Nx.tensor(tensor_label)
+    |> Nx.equal(Nx.tensor(Enum.to_list(0..size)))
   end
 
   @spec process_labels(list(String.t()), Integer) :: Nx.Tensor
