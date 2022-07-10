@@ -130,7 +130,7 @@ defmodule VGG16Model do
       model = Vgg16Model.build_model(input_shape, output_count)
   """
   @spec build_model(Tuple, Integer) :: %Axon{}
-  def build_model(input_shape, count) when is_input_shape(input_shape) and is_integer(count) do
+  def build_model(input_shape, count) when is_integer(count) do
     input_shape
     |> block_1
     |> block_2
