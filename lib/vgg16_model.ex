@@ -1,3 +1,125 @@
+defmodule Convolve2D do
+  @moduledoc """
+  Create a conv2D layer
+  """
+
+  defp tuple_or_duplicate(key, tuple_or_integer, rank) do
+    cond do
+      is_tuple(tuple_or_integer) ->
+        if tuple_size(tuple_or_integer) != rank do
+          raise ArgumentError,
+                "expected #{inspect(key)} to be a #{rank}-element tuple, " <>
+                  "got: #{inspect(tuple_or_integer)}"
+        end
+
+        tuple_or_integer
+
+      is_integer(tuple_or_integer) ->
+        Tuple.duplicate(tuple_or_integer, rank)
+
+      true ->
+        raise ArgumentError,
+              "expected #{inspect(key)} to be an integer or a tuple, " <>
+                "got: #{inspect(tuple_or_integer)}"
+    end
+  end
+
+  defp list_or_duplicate(key, list_or_integer, rank) do
+    cond do
+      is_list(list_or_integer) ->
+        if length(list_or_integer) != rank do
+          raise ArgumentError,
+                "expected #{inspect(key)} to be a #{rank}-element list, " <>
+                  "got: #{inspect(list_or_integer)}"
+        end
+
+        list_or_integer
+
+      is_integer(list_or_integer) ->
+        List.duplicate(list_or_integer, rank)
+
+      true ->
+        raise ArgumentError,
+              "expected #{inspect(key)} to be an integer or a list, " <>
+                "got: #{inspect(list_or_integer)}"
+    end
+  end
+
+  def conv2D(%Axon{output_shape: parent_shape} = x, units, opts \\ [])
+  when is_integer(units) and units > 0 do
+    opts =
+      Keyword.validate!(opts, [
+        :name,
+        :activation,
+        kernel_initializer: :glorot_uniform,
+        bias_initializer: :zeros,
+        kernel_size: 1,
+        strides: 1,
+        padding: :valid,
+        input_dilation: 1,
+        kernel_dilation: 1,
+        channels: :first,
+        feature_group_size: 1
+      ])
+
+    kernel_size = opts[:kernel_size]
+    strides = opts[:strides]
+    padding = opts[:padding]
+    input_dilation = opts[:input_dilation]
+    kernel_dilation = opts[:kernel_dilation]
+    channels = opts[:channels]
+    feature_group_size = opts[:feature_group_size]
+    inner_rank = Nx.rank(parent_shape) - 2
+
+    kernel_size = tuple_or_duplicate(:kernel_size, kernel_size, inner_rank)
+    strides = list_or_duplicate(:strides, strides, inner_rank)
+    input_dilation = list_or_duplicate(:input_dilation, input_dilation, inner_rank)
+    kernel_dilation = list_or_duplicate(:kernel_dilation, kernel_dilation, inner_rank)
+
+    kernel_shape =
+      Axon.Shape.conv_kernel(parent_shape, units, kernel_size, channels, feature_group_size)
+
+    bias_shape =
+      Axon.Shape.conv_bias(parent_shape, units, kernel_size, channels, feature_group_size)
+
+    output_shape =
+      Axon.Shape.conv(
+        parent_shape,
+        kernel_shape,
+        strides,
+        padding,
+        input_dilation,
+        kernel_dilation,
+        channels,
+        feature_group_size
+      )
+
+    kernel = Axon.param("kernel", kernel_shape, initializer: opts[:kernel_initializer])
+
+    bias = Axon.param("bias", bias_shape, initializer: opts[:bias_initializer])
+    {inputs, op} = {[x, kernel], &Axon.Layers.conv(&1, &2, bias, &3)}
+
+    node =
+      Axon.layer(op, inputs,
+        name: opts[:name],
+        strides: strides,
+        padding: padding,
+        input_dilation: input_dilation,
+        kernel_dilation: kernel_dilation,
+        feature_group_size: feature_group_size,
+        channels: channels,
+        shape: output_shape,
+        op_name: :conv2D
+      )
+
+    if activation = opts[:activation] do
+      Axon.activation(node, activation)
+    else
+      node
+    end
+  end
+end
+
 defmodule VGG16Model do
   @moduledoc """
   VGG16Model
@@ -19,43 +141,43 @@ defmodule VGG16Model do
   @spec block_1() :: %Axon{}
   defp block_1() do
     Axon.input({nil, 3, 224, 224}, "input")
-    |> Axon.conv(64, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv1_1")
-    |> Axon.conv(64, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv1_2")
+    |> Convolve2D.conv2D(64, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv1_1")
+    |> Convolve2D.conv2D(64, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv1_2")
     |> Axon.max_pool(kernel_size: {2, 2}, strides: [2, 2], name: "max_pool_1")
   end
 
   @spec block_2(%Axon{}) :: %Axon{}
   defp block_2(%Axon{} = block) do
     block
-    |> Axon.conv(128, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv2_1")
-    |> Axon.conv(128, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv2_2")
+    |> Convolve2D.conv2D(128, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv2_1")
+    |> Convolve2D.conv2D(128, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv2_2")
     |> Axon.max_pool(kernel_size: {2, 2}, strides: [2, 2], name: "max_pool_2")
   end
 
   @spec block_3(%Axon{}) :: %Axon{}
   defp block_3(%Axon{} = block) do
     block
-    |> Axon.conv(256, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv3_1")
-    |> Axon.conv(256, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv3_2")
-    |> Axon.conv(256, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv3_3")
+    |> Convolve2D.conv2D(256, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv3_1")
+    |> Convolve2D.conv2D(256, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv3_2")
+    |> Convolve2D.conv2D(256, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv3_3")
     |> Axon.max_pool(kernel_size: {2, 2}, strides: [2, 2], name: "max_pool_3")
   end
 
   @spec block_4(%Axon{}) :: %Axon{}
   defp block_4(%Axon{} = block) do
     block
-    |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv4_1")
-    |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv4_2")
-    |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv4_3")
+    |> Convolve2D.conv2D(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv4_1")
+    |> Convolve2D.conv2D(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv4_2")
+    |> Convolve2D.conv2D(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv4_3")
     |> Axon.max_pool(kernel_size: {2, 2}, strides: [2, 2], name: "max_pool_4")
   end
 
   @spec block_5(%Axon{}) :: %Axon{}
   defp block_5(%Axon{} = block) do
     block
-    |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv5_1")
-    |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv5_2")
-    |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv5_3")
+    |> Convolve2D.conv2D(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv5_1")
+    |> Convolve2D.conv2D(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv5_2")
+    |> Convolve2D.conv2D(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv5_3")
     |> Axon.max_pool(kernel_size: {2, 2}, strides: [2, 2], name: "max_pool_5")
   end
 
