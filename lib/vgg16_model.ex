@@ -16,9 +16,9 @@ defmodule VGG16Model do
   defguardp is_input_shape(x) when is_tuple(x) and tuple_size(x) == 4
   defguard is_trainable(x, y, z) when is_function(x) and is_integer(y) and is_integer(z)
 
-  @spec block_1(tuple) :: %Axon{}
-  defp block_1(input_shape) when is_input_shape(input_shape) do
-    input_shape
+  @spec block_1() :: %Axon{}
+  defp block_1() do
+    {nil, 224, 224, 3}
     |>Axon.input("input")
     |> Axon.conv(64, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv1_1")
     |> Axon.conv(64, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv1_2")
@@ -71,6 +71,25 @@ defmodule VGG16Model do
     |> Axon.dense(units, activation: :softmax, name: "output")
   end
 
+  @doc """
+  Build VGG16 model.
+
+  ## Examples
+      output_count = 10
+      input_shape = {nil, 224, 224, 3}
+
+      model = Vgg16Model.build_model(input_shape, output_count)
+  """
+  @spec build_model(Integer) :: %Axon{}
+  def build_model(units) when is_integer(units) do
+    block_1
+    |> block_2
+    |> block_3
+    |> block_4
+    |> block_5
+    |> block_encoder(units)
+  end
+
   @spec model_serialize(%Axon{}, Map) :: {:ok, Binary} | {:error, String.t()}
   defp model_serialize(%Axon{} = model, state) when is_map(state) do
     try do
@@ -118,26 +137,6 @@ defmodule VGG16Model do
     labels
     |> Enum.map(fn label -> parse_label(label, size) end)
     |> Nx.stack
-  end
-
-  @doc """
-  Build VGG16 model.
-
-  ## Examples
-      output_count = 10
-      input_shape = {nil, 224, 224, 3}
-
-      model = Vgg16Model.build_model(input_shape, output_count)
-  """
-  @spec build_model(Tuple, Integer) :: %Axon{}
-  def build_model(input_shape, count) when is_input_shape(input_shape) and is_integer(count) do
-    input_shape
-    |> block_1
-    |> block_2
-    |> block_3
-    |> block_4
-    |> block_5
-    |> block_encoder(count)
   end
 
   @doc """
@@ -246,4 +245,4 @@ defmodule VGG16Model do
   end
 end
 
-VGG16Model.build_model({nil, 3, 224, 224}, 1011) |> IO.inspect
+VGG16Model.build_model(1011) |> IO.inspect
