@@ -6,7 +6,7 @@ defmodule VGG16Model do
   @shape_size 224
   @shape_depth 3
 
-  @reshape_size {@shape_size,  @shape_size, @shape_depth}
+  @reshape_size {@shape_depth, @shape_size,  @shape_size}
 
   require Axon
   require Nx
@@ -18,8 +18,7 @@ defmodule VGG16Model do
 
   @spec block_1() :: %Axon{}
   defp block_1() do
-    {nil, 224, 224, 3}
-    |>Axon.input("input")
+    Axon.input({nil, 3, 224, 224}, "input")
     |> Axon.conv(64, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv1_1")
     |> Axon.conv(64, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv1_2")
     |> Axon.max_pool(kernel_size: {2, 2}, strides: [2, 2], name: "max_pool_1")
@@ -30,7 +29,7 @@ defmodule VGG16Model do
     block
     |> Axon.conv(128, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv2_1")
     |> Axon.conv(128, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv2_2")
-    |> Axon.max_pool(strides: [2, 2], name: "max_pool_2")
+    |> Axon.max_pool(kernel_size: {2, 2}, strides: [2, 2], name: "max_pool_2")
   end
 
   @spec block_3(%Axon{}) :: %Axon{}
@@ -57,7 +56,7 @@ defmodule VGG16Model do
     |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv5_1")
     |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv5_2")
     |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv5_3")
-    |> Axon.max_pool(kernel_size: {2, 2}, strides: [2, 2], name: "max_pool_4")
+    |> Axon.max_pool(kernel_size: {2, 2}, strides: [2, 2], name: "max_pool_5")
   end
 
   @spec block_encoder(%Axon{}, Integer) :: %Axon{}
@@ -75,10 +74,7 @@ defmodule VGG16Model do
   Build VGG16 model.
 
   ## Examples
-      output_count = 10
-      input_shape = {nil, 224, 224, 3}
-
-      model = Vgg16Model.build_model(input_shape, output_count)
+      model = Vgg16Model.build_model(1011)
   """
   @spec build_model(Integer) :: %Axon{}
   def build_model(units) when is_integer(units) do
@@ -144,7 +140,7 @@ defmodule VGG16Model do
 
   ## Examples
       data = data("./data/location")
-      model = VGG16Model.build_model({nil, 224, 224, 3}, 10)
+      model = VGG16Model.build_model(1011)
       epochs = 10
 
       state = VGG16Model.train(model, data, epochs)
@@ -165,8 +161,8 @@ defmodule VGG16Model do
 
   ## Example
     data = data("./data/location")
-    model = VGG16Model.build_model({nil, 224, 224, 3}, 10)
-    state = VGG16Model.train(model, data, 10)
+    model = VGG16Model.build_model(1011)
+    state = VGG16Model.train(model, data, 1011)
 
     Vgg16Model.test(model, state, data)
   """
