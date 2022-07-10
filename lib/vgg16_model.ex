@@ -17,7 +17,7 @@ defmodule VGG16Model do
     |>Axon.input("input")
     |> Axon.conv(64, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv1_1")
     |> Axon.conv(64, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv1_2")
-    |> Axon.max_pool(strides: [2, 2], name: "max_pool_1")
+    |> Axon.max_pool(kernel_size: {2, 2}, strides: [2, 2], name: "max_pool_1")
   end
 
   @spec block_2(%Axon{}) :: %Axon{}
@@ -34,7 +34,7 @@ defmodule VGG16Model do
     |> Axon.conv(256, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv3_1")
     |> Axon.conv(256, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv3_2")
     |> Axon.conv(256, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv3_3")
-    |> Axon.max_pool(strides: [2, 2], name: "max_pool_3")
+    |> Axon.max_pool(kernel_size: {2, 2}, strides: [2, 2], name: "max_pool_3")
   end
 
   @spec block_4(%Axon{}) :: %Axon{}
@@ -43,7 +43,7 @@ defmodule VGG16Model do
     |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv4_1")
     |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv4_2")
     |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv4_3")
-    |> Axon.max_pool(strides: [2, 2], name: "max_pool_4")
+    |> Axon.max_pool(kernel_size: {2, 2}, strides: [2, 2], name: "max_pool_4")
   end
 
   @spec block_5(%Axon{}) :: %Axon{}
@@ -52,7 +52,7 @@ defmodule VGG16Model do
     |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv5_1")
     |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv5_2")
     |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv5_3")
-    |> Axon.max_pool(strides: [2, 2], name: "max_pool_4")
+    |> Axon.max_pool(kernel_size: {2, 2}, strides: [2, 2], name: "max_pool_4")
   end
 
   @spec block_encoder(%Axon{}, Integer) :: %Axon{}
@@ -148,7 +148,7 @@ defmodule VGG16Model do
   @spec train_model(%Axon{}, Function, Integer, Integer) :: Map
   def train_model(%Axon{} = model, data, epochs, iterations)
   when is_trainable(data, epochs, iterations) do
-    optimizer = Axon.Optimizers.adam(1.0e-4)
+    optimizer = Axon.Optimizers.adam(0.001)
 
     model
     |> Axon.Loop.trainer(:categorical_cross_entropy, optimizer, log: 1)
