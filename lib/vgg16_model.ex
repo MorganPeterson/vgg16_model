@@ -56,14 +56,14 @@ defmodule VGG16Model do
   end
 
   @spec block_encoder(%Axon{}, Integer) :: %Axon{}
-  defp block_encoder(%Axon{} = block, count) when is_integer(count) and count > 0 do
+  defp block_encoder(%Axon{} = block, units) when is_integer(units) and units > 0 do
     block
     |> Axon.flatten(name: "flatten")
     |> Axon.dense(4096, activation: :relu, name: "fc_1")
-    |> Axon.dropout(rate: 0.5, name: "dropout_1")
+    # |> Axon.dropout(rate: 0.5, name: "dropout_1")
     |> Axon.dense(4096, activation: :relu, name: "fc_2")
-    |> Axon.dropout(rate: 0.5, name: "dropout_4")
-    |> Axon.dense(count, activation: :softmax, name: "output")
+    # |> Axon.dropout(rate: 0.5, name: "dropout_4")
+    |> Axon.dense(units, activation: :softmax, name: "output")
   end
 
   @spec model_serialize(%Axon{}, Map) :: {:ok, Binary} | {:error, String.t()}
