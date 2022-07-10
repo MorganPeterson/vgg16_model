@@ -86,24 +86,28 @@ defmodule VGG16Model do
     |> block_encoder(units)
   end
 
-  @spec model_serialize(%Axon{}, Map) :: {:ok, Binary} | {:error, String.t()}
-  defp model_serialize(%Axon{} = model, state) when is_map(state) do
-    try do
-      content = Axon.serialize(model, state)
-      {:ok, content}
-    catch
-      error, reason -> {:error, "Caught #{reason}: #{error}"}
-    end
-  end
-
   @spec parse_image(String.t()) :: Nx.Tensor
   defp parse_image(filename) when is_bitstring(filename) do
+    # read in image at filename, resize image to 224x224, convert to
+    # Nx.tensor, reshape tensor to @reshape_size, and then convert
+    # pixels to 255.0
     filename
     |> StbImage.read_file!
     |> StbImage.resize(@shape_size, @shape_size)
     |> StbImage.to_nx
     |> Nx.reshape(@reshape_size)
     |> Nx.divide(255.0)
+  end
+
+  @spec model_serialize(%Axon{}, Map) :: {:ok, Binary} | {:error, String.t()}
+  defp model_serialize(%Axon{} = model, state) when is_map(state) do
+    # serialize the model for writing it to file
+    try do
+      content = Axon.serialize(model, state)
+      {:ok, content}
+    catch
+      error, reason -> {:error, "Caught #{reason}: #{error}"}
+    end
   end
 
   @doc """
@@ -117,6 +121,8 @@ defmodule VGG16Model do
   """
   @spec process_images(list(String.t())) :: Nx.Tensor
   def process_images(images) when is_list_gt_zero(images) do
+    # take in a list file names and pass them to parse_image before putting
+    # them in a stack (Nx.stack).
     images
     |> Enum.map(fn image -> parse_image(image) end)
     |> Nx.stack
@@ -124,10 +130,20 @@ defmodule VGG16Model do
 
   @spec parse_label(Integer, Integer) :: Nx.Tensor
   defp parse_label(label, size) when is_integer(label) and is_integer(size) do
-    label
-    |> Nx.equal(Nx.tensor(Enum.to_list(1..size)))
+    # convert label (Integer) into a Nx.tensor
+    Nx.equal(label, Nx.tensor(Enum.to_list(1..size)))
   end
 
+  @doc """
+  Take in a list of labels and parse them. Then add them to stack (Nx.stack)
+
+  ## Parameters
+    - labels: List of labels (Integers)
+    - size: Size of tensor for labels
+
+  ## Examples
+    tensor = process_labels([1, 2, 3], 3)
+  """
   @spec process_labels(list(Integer), Integer) :: Nx.Tensor
   def process_labels(labels, size) when is_list_gt_zero(labels) and is_integer(size) do
     labels
