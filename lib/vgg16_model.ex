@@ -61,13 +61,15 @@ defmodule VGG16Model do
 
   @spec block_encoder(%Axon{}, Integer) :: %Axon{}
   defp block_encoder(%Axon{} = block, units) when is_integer(units) and units > 0 do
+    bias - Nx.tensor([1.0], type: {:f 32})
+
     block
     |> Axon.flatten(name: "flatten")
-    |> Axon.dense(4096, activation: :relu, name: "fc_1")
+    |> Axon.dense(4096, {3, 3}, bias, activation: :relu, name: "fc_1")
     |> Axon.dropout(rate: 0.5, name: "dropout_1")
-    |> Axon.dense(4096, activation: :relu, name: "fc_2")
+    |> Axon.dense(4096, {3, 3}, bias, activation: :relu, name: "fc_2")
     |> Axon.dropout(rate: 0.5, name: "dropout_2")
-    |> Axon.dense(units, activation: :softmax, name: "output")
+    |> Axon.dense(units, {3, 3}, bias, activation: :softmax, name: "output")
   end
 
   @doc """
