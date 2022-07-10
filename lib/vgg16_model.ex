@@ -6,7 +6,7 @@ defmodule VGG16Model do
   @shape_size 224
   @shape_depth 3
 
-  @reshape_size {@shape_depth, @shape_size,  @shape_size}
+  @reshape_size {@shape_size,  @shape_size, @shape_depth}
 
   require Axon
   require Nx
