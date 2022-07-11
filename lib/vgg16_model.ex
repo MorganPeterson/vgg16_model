@@ -79,7 +79,7 @@ defmodule VGG16Model do
   """
   @spec build_model(Integer) :: %Axon{}
   def build_model(units) when is_integer(units) do
-    block_1
+    block_1()
     |> block_2
     |> block_3
     |> block_4
@@ -105,8 +105,12 @@ defmodule VGG16Model do
   defp image_handler(filename) do
     {:ok, ref} = OpenCV.imread(filename, flags: OpenCV.cv_IMREAD_GRAYSCALE())
     {:ok, img} = OpenCV.resize(ref, [224, 224])
-    {:ok, val} = OpenCV.imencode(".jpg", img)
-    OpenCV.Nx.to_nx(val)
+
+    OpenCV.imencode(".jpg", img)
+    |> then(fn {:ok, val} -> val end)
+    |> OpenCV.Nx.to_nx()
+    |> Nx.backend_transfer(Exla.Backend)
+    |> Nx.flatten()
   end
 
   @spec parse_image(String.t()) :: Nx.Tensor
