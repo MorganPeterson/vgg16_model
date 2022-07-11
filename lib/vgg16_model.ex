@@ -101,16 +101,12 @@ defmodule VGG16Model do
     end
   end
 
-  defp resize({:ok, ref}) do
-    OpenCV.resize(ref, [224, 224])
-  end
-
-  defp img_encode({:ok, ref}) do
-    OpenCV.imencode(".jpg", ref)
-  end
-
-  defp to_nx({:ok, ref}) do
-    OpenCV.Nx.to_nx(ref)
+  @spec image_handler(String.t()) :: Nx.Tensor
+  defp image_handler(filename) do
+    {:ok, ref} = OpenCV.imread(filename, flags: OpenCV.cv_IMREAD_GRAYSCALE())
+    {:ok, img} = OpenCV.resize(ref, [224, 224])
+    {:ok, val} = OpenCV.imencode(".jpg", img)
+    OpenCV.Nx.to_nx(val)
   end
 
   @spec parse_image(String.t()) :: Nx.Tensor
@@ -119,11 +115,8 @@ defmodule VGG16Model do
     # Nx.tensor, reshape tensor to @reshape_size, and then convert
     # pixels to 255.0
     filename
-    |> OpenCV.imread(flags: OpenCV.cv_IMREAD_GRAYSCALE())
-    |> resize
-    |> img_encode
-    |> to_nx
-    |> augment_tensor
+    |> image_handler()
+    |> augment_tensor()
   end
 
   @spec model_serialize(%Axon{}, Map) :: {:ok, Binary} | {:error, String.t()}
