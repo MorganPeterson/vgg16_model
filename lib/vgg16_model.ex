@@ -104,9 +104,8 @@ defmodule VGG16Model do
   @spec image_handler(String.t()) :: Nx.Tensor
   defp image_handler(filename) do
     {:ok, ref} = OpenCV.imread(filename, flags: OpenCV.cv_IMREAD_GRAYSCALE())
-    {:ok, img} = OpenCV.resize(ref, [224, 224])
 
-    OpenCV.imencode(".jpg", img)
+    OpenCV.resize(ref, [224, 224])
     |> then(fn {:ok, val} -> val end)
     |> OpenCV.Nx.to_nx()
     |> Nx.backend_transfer(Exla.Backend)
