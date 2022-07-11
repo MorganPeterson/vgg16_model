@@ -81,9 +81,9 @@ defmodule VGG16Model do
   def build_model(units) when is_integer(units) do
     block_1()
     |> block_2
-    #|> block_3
-    #|> block_4
-    #|> block_5
+    |> block_3
+    |> block_4
+    |> block_5
     |> block_encoder(units)
   end
 
