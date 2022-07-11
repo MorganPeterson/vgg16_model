@@ -21,8 +21,8 @@ defmodule Vgg16Model.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:evision, "~> 0.1.0-dev", github: "cocoa-xu/evision", branch: "main"},
       {:axon, "~> 0.2.0-dev", github: "elixir-nx/axon"},
-      {:stb_image, "~> 0.5.2"},
       {:exla, "~> 0.2"}
     ]
   end

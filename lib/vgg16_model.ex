@@ -10,7 +10,8 @@ defmodule VGG16Model do
 
   require Axon
   require Nx
-  require StbImage
+
+  alias Evision, as: OpenCV
 
   defguardp is_list_gt_zero(x) when is_list(x) and length(x) > 0
   defguardp is_input_shape(x) when is_tuple(x) and tuple_size(x) == 4
@@ -100,15 +101,28 @@ defmodule VGG16Model do
     end
   end
 
+  defp resize({:ok, ref}) do
+    OpenCV.resize(ref, [224, 224])
+  end
+
+  defp img_encode({:ok, ref}) do
+    OpenCV.imencode(".jpg", ref)
+  end
+
+  defp to_nx({:ok, ref}) do
+    OpenCV.Nx.to_nx(ref)
+  end
+
   @spec parse_image(String.t()) :: Nx.Tensor
   defp parse_image(filename) when is_bitstring(filename) do
     # read in image at filename, resize image to 224x224, convert to
     # Nx.tensor, reshape tensor to @reshape_size, and then convert
     # pixels to 255.0
     filename
-    |> StbImage.read_file!
-    |> StbImage.resize(@shape_size, @shape_size)
-    |> StbImage.to_nx
+    |> OpenCV.imread(flags: OpenCV.cv_IMREAD_GRAYSCALE())
+    |> resize
+    |> img_encode
+    |> to_nx
     |> augment_tensor
   end
 
