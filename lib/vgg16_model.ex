@@ -6,7 +6,7 @@ defmodule VGG16Model do
   @shape_size 224
   @shape_depth 3
 
-  @reshape_size {@shape_size,  @shape_size}
+  @reshape_size {@shape_depth, @shape_size,  @shape_size}
 
   require Axon
   require Nx
@@ -19,7 +19,7 @@ defmodule VGG16Model do
 
   @spec block_1() :: %Axon{}
   defp block_1() do
-    Axon.input({nil, 224, 224}, "input")
+    Axon.input({nil, 3, 224, 224}, "input")
     |> Axon.conv(64, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv1_1")
     |> Axon.conv(64, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv1_2")
     |> Axon.max_pool(kernel_size: {2, 2}, strides: [2, 2], name: "max_pool_1")
