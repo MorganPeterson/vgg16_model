@@ -86,6 +86,20 @@ defmodule VGG16Model do
     |> block_encoder(units)
   end
 
+  @spec augment_tensor(Nx.Tensor) :: Nx.Tensor
+  defp augment_tensor(img_tensor) do
+    t =
+      img_tensor
+      |> Nx.reshape(@reshape_size)
+      |> Nx.divide(255.0)
+
+    if Nx.random_uniform({}) > 0.5 do
+      Nx.reverse(t, axes: [0])
+    else
+      Nx.reverse(t, axes: [1])
+    end
+  end
+
   @spec parse_image(String.t()) :: Nx.Tensor
   defp parse_image(filename) when is_bitstring(filename) do
     # read in image at filename, resize image to 224x224, convert to
@@ -95,8 +109,7 @@ defmodule VGG16Model do
     |> StbImage.read_file!
     |> StbImage.resize(@shape_size, @shape_size)
     |> StbImage.to_nx
-    |> Nx.reshape(@reshape_size)
-    |> Nx.divide(255.0)
+    |> augment_tensor
   end
 
   @spec model_serialize(%Axon{}, Map) :: {:ok, Binary} | {:error, String.t()}
