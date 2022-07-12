@@ -4,7 +4,7 @@ defmodule VGG16Model do
   """
 
   @shape_size 224
-  @shape_depth 1
+  @shape_depth 3
 
   @reshape_size {@shape_depth, @shape_size,  @shape_size}
 
@@ -19,7 +19,7 @@ defmodule VGG16Model do
 
   @spec block_1() :: %Axon{}
   defp block_1() do
-    Axon.input({nil, 1, 224, 224}, "input")
+    Axon.input({nil, 3, 224, 224}, "input")
     |> Axon.conv(64, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv1_1")
     |> Axon.conv(64, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv1_2")
     |> Axon.max_pool(kernel_size: {2, 2}, strides: [2, 2], name: "max_pool_1")
@@ -39,6 +39,7 @@ defmodule VGG16Model do
     |> Axon.conv(256, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv3_1")
     |> Axon.conv(256, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv3_2")
     |> Axon.conv(256, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv3_3")
+    |> Axon.conv(256, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv3_4")
     |> Axon.max_pool(kernel_size: {2, 2}, strides: [2, 2], name: "max_pool_3")
   end
 
@@ -48,6 +49,7 @@ defmodule VGG16Model do
     |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv4_1")
     |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv4_2")
     |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv4_3")
+    |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv4_4")
     |> Axon.max_pool(kernel_size: {2, 2}, strides: [2, 2], name: "max_pool_4")
   end
 
@@ -57,6 +59,7 @@ defmodule VGG16Model do
     |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv5_1")
     |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv5_2")
     |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv5_3")
+    |> Axon.conv(512, kernel_size: {3, 3}, padding: :same, activation: :relu, name: "conv5_4")
     |> Axon.max_pool(kernel_size: {2, 2}, strides: [2, 2], name: "max_pool_5")
   end
 
@@ -103,7 +106,7 @@ defmodule VGG16Model do
 
   @spec image_handler(String.t()) :: Nx.Tensor
   defp image_handler(filename) do
-    OpenCV.imread(filename, flags: OpenCV.cv_IMREAD_GRAYSCALE())
+    OpenCV.imread(filename, flags: OpenCV.cv_COLOR_BGR2RGB())
     |> then(fn {:ok, val} -> val end)
     |> OpenCV.resize([224, 224])
     |> then(fn {:ok, val} -> val end)
@@ -116,9 +119,7 @@ defmodule VGG16Model do
     # read in image at filename, resize image to 224x224, convert to
     # Nx.tensor, reshape tensor to @reshape_size, and then convert
     # pixels to 255.0
-    filename
-    |> image_handler()
-    |> augment_tensor()
+    filename |> image_handler()
   end
 
   @spec model_serialize(%Axon{}, Map) :: {:ok, Binary} | {:error, String.t()}
